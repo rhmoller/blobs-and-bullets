@@ -107,8 +107,8 @@ impl CanvasRenderer {
         }
     }
 
-    pub fn draw_rect(&self, x: f64, y: f64, w: f64, h: f64) {
-        self.ctx.set_fill_style(&"#0006".into());
+    pub fn draw_rect(&self, fill_style: &str, x: f64, y: f64, w: f64, h: f64) {
+        self.ctx.set_fill_style(&fill_style.into());
         self.ctx.fill_rect(x, y, w, h);
     }
 

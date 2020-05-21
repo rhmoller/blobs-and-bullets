@@ -41,6 +41,8 @@ pub struct MyGame {
 
     spawn_points: Vec<(Vec2, u8, u8)>,
     enemies: Vec<(Vec2, f64, u8)>,
+    boss: Option<Boss>,
+
     power_ups: Vec<(Vec2, i8)>,
 }
 
@@ -49,7 +51,6 @@ pub struct Boss {
     pub lives: i32,
     pub heat: f64,
     pub charging: bool,
-    pub sleep: i32,
     pub tx: f64,
 }
 
@@ -163,10 +164,10 @@ impl Player {
 impl MyGame {
     pub fn new() -> Self {
         let spawn_points = vec![
-            (Vec2::new(16. * 30., 16. * 19.), 0, 10),
-            (Vec2::new(16. * 13., 16. * 23.), 1, 10),
-            (Vec2::new(16. * 50., 16. * 24.), 2, 10),
-            (Vec2::new(16. * 18., 16. * 8.), 2, 10),
+            (Vec2::new(16. * 30., 16. * 19.), 0, 1),
+            (Vec2::new(16. * 13., 16. * 23.), 1, 0),
+            (Vec2::new(16. * 50., 16. * 24.), 2, 0),
+            (Vec2::new(16. * 18., 16. * 8.), 2, 0),
         ];
 
         MyGame {
@@ -179,6 +180,7 @@ impl MyGame {
             splatter: Vec::new(),
             spawn_points,
             enemies: Vec::new(),
+            boss: None,
             power_ups: Vec::new(),
         }
     }
@@ -222,6 +224,7 @@ impl MyGame {
         self.update_splatter();
         self.spawn_enemies();
         self.update_enemies(&ctx);
+        self.update_boss();
         self.update_power_ups();
         self.update_scores();
     }
@@ -269,6 +272,7 @@ impl MyGame {
         let mut hit_bullets = Vec::new();
         let mut hit_enemies = Vec::new();
         let mut hit_spawn_points = Vec::new();
+        let mut hit_boss = 0;
 
         for (b_idx, b) in self.bullets.iter().enumerate() {
             let inside_bounds =
@@ -336,25 +340,25 @@ impl MyGame {
                                     let kind = Splat::Enemy(e.1);
                                     MyGame::add_splatter(&mut self.splatter, &b.0, 8, kind);
                                 }
-                            } /*else if let Some(boss) = &self.boss {
-                                  let bp = boss.pos.clone();
-                                  if vec2_distance(&b.0, &bp) < 32.0 {
-                                      hit_bullets.push(b_idx);
-                                      // hit_boss += 1;
-                                      if player_num == 1 {
-                                          self.player_1.next_score += 255;
-                                      } else {
-                                          self.player_2.next_score += 250;
-                                      }
-                                      MyGame::add_splatter(
-                                          &mut self.splatter,
-                                          &b.0,
-                                          8,
-                                          Splat::Enemy(0),
-                                      );
-                                      MyGame::add_splatter(&mut self.splatter, &b.0, 8, Splat::Blood);
-                                  }
-                              }*/
+                            } else if let Some(boss) = &self.boss {
+                                let bp = boss.pos.clone();
+                                if vec2_distance(&b.0, &bp) < 32.0 {
+                                    hit_bullets.push(b_idx);
+                                    hit_boss += 1;
+                                    if player_num == 1 {
+                                        self.player_1.next_score += 255;
+                                    } else {
+                                        self.player_2.next_score += 250;
+                                    }
+                                    MyGame::add_splatter(
+                                        &mut self.splatter,
+                                        &b.0,
+                                        8,
+                                        Splat::Enemy(0),
+                                    );
+                                    MyGame::add_splatter(&mut self.splatter, &b.0, 8, Splat::Blood);
+                                }
+                            }
                         }
                         Shooter::Enemy(t) => {
                             let hit1 = vec2_distance(&self.player_1.pos, &b.0) < 16.0;
@@ -400,6 +404,7 @@ impl MyGame {
             self.enemies.remove(*idx);
         }
 
+        let mut destroyed_spawn_points = false;
         for idx in hit_spawn_points.iter() {
             let sp = self.spawn_points.get_mut(*idx);
             if let Some(p) = sp {
@@ -407,8 +412,27 @@ impl MyGame {
                     p.2 -= 1;
                     if p.2 < 1 {
                         p.1 = 3;
+                        destroyed_spawn_points = true;
                     }
                 }
+            }
+        }
+
+        let active_spawn_point = self.spawn_points.iter().find(|sp| sp.2 > 0);
+        if destroyed_spawn_points && active_spawn_point.is_none() {
+            self.boss.replace(Boss {
+                pos: Vec2::new(264., -55.),
+                lives: 80,
+                heat: 100.,
+                charging: false,
+                tx: 100. + random() * 300.,
+            });
+        }
+
+        if let Some(boss) = &mut self.boss {
+            boss.lives -= hit_boss;
+            if boss.lives < 1 {
+                self.boss.take();
             }
         }
     }
@@ -448,11 +472,7 @@ impl MyGame {
     }
 
     fn spawn_enemies(&mut self) {
-        // let no_boss = match &self.boss {
-        //     Some(boss) => boss.sleep > 1,
-        //     None => true,
-        // };
-        let no_boss = true;
+        let no_boss = self.boss.is_none();
         if random() < 0.02 && no_boss {
             let idx = (4. * random()).floor() as usize;
             let spawn_points = &self.spawn_points[idx];
@@ -508,6 +528,47 @@ impl MyGame {
         self.enemies.retain(|b| {
             b.0.x > 0.0 && b.0.x < ctx.window_width && b.0.y > 0.0 && b.0.y < ctx.window_height
         });
+    }
+
+    fn update_boss(&mut self) {
+        if let Some(boss) = &mut self.boss {
+            if boss.pos.y < 205.0 {
+                boss.pos.y += 1.;
+            } else {
+                boss.heat += 1.;
+                if !boss.charging {
+                    if boss.pos.x < boss.tx - 2. {
+                        boss.pos.x += 1.5;
+                    } else if boss.pos.x > boss.tx + 2. {
+                        boss.pos.x -= 1.5;
+                    } else {
+                        boss.charging = true;
+                        boss.heat = 0.;
+                    }
+                } else if boss.heat > 25. {
+                    boss.tx += 100.0 - 200. * random();
+                    if boss.tx < 50. {
+                        boss.tx += 50.
+                    } else if boss.tx > 7. * 163. {
+                        boss.tx -= 20.
+                    }
+
+                    boss.charging = false;
+                    boss.heat = 0.;
+                    let offset = random();
+                    for i in 0..10 {
+                        let a = offset + (PI / 5.0) * i as f64;
+                        let v = 5.;
+                        let p = boss.pos.clone();
+                        self.bullets.push(Bullet(
+                            p,
+                            Vec2::new(v * cos(a), v * sin(a)),
+                            Shooter::Boss,
+                        ));
+                    }
+                }
+            }
+        }
     }
 
     pub fn render(&self, renderer: &CanvasRenderer, ctx: &GameContext) {
@@ -613,6 +674,23 @@ impl MyGame {
                 renderer.draw_sprite(&image, sprite, b.0.x - 8., b.0.y - 8.);
             }
 
+            if let Some(boss) = &self.boss {
+                if boss.charging {
+                    renderer.draw_block(&image, 176, boss.pos.x - 12., boss.pos.y - 12., 3, 3)
+                } else {
+                    renderer.draw_block(&image, 179, boss.pos.x - 12., boss.pos.y - 12., 3, 3)
+                }
+
+                renderer.draw_rect("black", boss.pos.x - 12., boss.pos.y + 40., 48., 2.);
+                renderer.draw_rect(
+                    "red",
+                    boss.pos.x - 12.,
+                    boss.pos.y + 40.,
+                    (48. * boss.lives as f64) / 80.0,
+                    2.,
+                );
+            }
+
             for b in self.bullets.iter() {
                 let sprite = match b.2 {
                     Shooter::Player(_) => 165,
@@ -676,7 +754,7 @@ impl MyGame {
             renderer.draw_numbers(&numbers, px, 10., &score);
 
             if self.player_1.lives < 1 && self.player_2.lives < 1 {
-                renderer.draw_rect(96., 270. - 48., 1920. / 2. - 192., 96.);
+                renderer.draw_rect("#0006", 96., 270. - 48., 1920. / 2. - 192., 96.);
                 let text_x = (((1920 / 2) - 13 * 32) / 2) as f64;
                 renderer.draw_big_text(
                     &self.numbers.as_ref().unwrap(),
