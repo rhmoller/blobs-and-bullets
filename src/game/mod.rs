@@ -4,7 +4,7 @@ use crate::engine::preloader::{Preloader, Resources};
 use crate::engine::renderer::CanvasRenderer;
 use crate::engine::tiled::TileMap;
 use crate::engine::GameContext;
-use js_sys::Math::{cos, random, sin};
+use js_sys::Math::random;
 use std::f64::consts::PI;
 use web_sys::HtmlImageElement;
 
@@ -48,7 +48,7 @@ pub struct MyGame {
 
 pub struct Boss {
     pub pos: Vec2,
-    pub lives: i32,
+    pub health: i32,
     pub heat: f64,
     pub charging: bool,
     pub tx: f64,
@@ -67,7 +67,7 @@ pub struct Player {
     pub score: i32,
     pub next_score: i32,
 
-    pub lives: i32,
+    pub health: i32,
     pub ammo: i32,
     pub next_ammo: i32,
 }
@@ -98,7 +98,7 @@ impl Player {
             heat,
             score: 0,
             next_score: 0,
-            lives: 3 * 5,
+            health: 3 * 5,
             ammo: 250,
             next_ammo: 0,
         }
@@ -120,7 +120,7 @@ impl Player {
             self.pos.y + dir.y * 2.0 + 8.0,
         );
         let is_wall = is_wall_tile(t);
-        if (!is_wall) && self.lives > 0 {
+        if (!is_wall) && self.health > 0 {
             self.pos.x += dir.x * 2.0;
             self.pos.y += dir.y * 2.0;
         }
@@ -140,7 +140,7 @@ impl Player {
         self.aim.y = gamepad.aim_y_axis;
         self.shooting = gamepad.shoot;
 
-        let can_shoot = self.lives > 0
+        let can_shoot = self.health > 0
             && self.heat < 1.0
             && (self.aim.x.abs() > 0.25 || self.aim.y.abs() > 0.25);
 
@@ -234,14 +234,14 @@ impl MyGame {
         let player2_pos = self.player_2.pos.clone();
         let mut player_1_ammo = 0;
         let mut player_2_ammo = 0;
-        let mut player_1_lives = 0;
-        let mut player_2_lives = 0;
+        let mut player_1_health = 0;
+        let mut player_2_health = 0;
         self.power_ups.retain(|p| {
             let hit1 = vec2_distance(&p.0, &player1_pos) < 16.0;
             if hit1 {
                 match p.1 {
                     0 => player_1_ammo += 25,
-                    1 => player_1_lives += 5,
+                    1 => player_1_health += 5,
                     _ => (),
                 }
             }
@@ -250,7 +250,7 @@ impl MyGame {
             if hit2 {
                 match p.1 {
                     0 => player_2_ammo += 25,
-                    1 => player_2_lives += 5,
+                    1 => player_2_health += 5,
                     _ => (),
                 }
             }
@@ -259,8 +259,8 @@ impl MyGame {
         });
         self.player_1.ammo += player_1_ammo;
         self.player_2.ammo += player_2_ammo;
-        self.player_1.lives += player_1_lives;
-        self.player_2.lives += player_2_lives;
+        self.player_1.health += player_1_health;
+        self.player_2.health += player_2_health;
     }
 
     pub fn update_bullets(&mut self, ctx: &GameContext) {
@@ -364,10 +364,10 @@ impl MyGame {
                             let hit1 = vec2_distance(&self.player_1.pos, &b.0) < 16.0;
                             let hit2 = vec2_distance(&self.player_2.pos, &b.0) < 16.0;
                             if hit1 {
-                                self.player_1.lives -= 1;
+                                self.player_1.health -= 1;
                             }
                             if hit2 {
-                                self.player_2.lives -= 1;
+                                self.player_2.health -= 1;
                             }
                             if hit1 || hit2 {
                                 hit_bullets.push(b_idx);
@@ -379,10 +379,10 @@ impl MyGame {
                             let hit1 = vec2_distance(&self.player_1.pos, &b.0) < 16.0;
                             let hit2 = vec2_distance(&self.player_2.pos, &b.0) < 16.0;
                             if hit1 {
-                                self.player_1.lives -= 3;
+                                self.player_1.health -= 3;
                             }
                             if hit2 {
-                                self.player_2.lives -= 3;
+                                self.player_2.health -= 3;
                             }
                             if hit1 || hit2 {
                                 hit_bullets.push(b_idx);
@@ -422,7 +422,7 @@ impl MyGame {
         if destroyed_spawn_points && active_spawn_point.is_none() {
             self.boss.replace(Boss {
                 pos: Vec2::new(264., -55.),
-                lives: 80,
+                health: 80,
                 heat: 100.,
                 charging: false,
                 tx: 100. + random() * 300.,
@@ -430,8 +430,8 @@ impl MyGame {
         }
 
         if let Some(boss) = &mut self.boss {
-            boss.lives -= hit_boss;
-            if boss.lives < 1 {
+            boss.health -= hit_boss;
+            if boss.health < 1 {
                 self.boss.take();
             }
         }
@@ -452,8 +452,8 @@ impl MyGame {
                 pos.clone(),
                 kind,
                 Vec2::new(
-                    v * cos((i as f64 / amount as f64 + 8.0 * random()) * PI),
-                    v * sin((i as f64 / amount as f64 + 8.0 * random()) * PI),
+                    v * f64::cos((i as f64 / amount as f64 + 8.0 * random()) * PI),
+                    v * f64::sin((i as f64 / amount as f64 + 8.0 * random()) * PI),
                 ),
                 match kind {
                     Splat::Explosion => 24 + (8. * random()) as i8,
@@ -498,7 +498,7 @@ impl MyGame {
     }
     fn update_enemies(&mut self, ctx: &GameContext) {
         for b in self.enemies.iter_mut() {
-            let dir = Vec2::new(cos(b.1), sin(b.1));
+            let dir = Vec2::new(f64::cos(b.1), f64::sin(b.1));
             let t = get_tile_at(
                 &self.map.as_ref().unwrap().layers[0].data,
                 b.0.x + dir.x,
@@ -562,7 +562,7 @@ impl MyGame {
                         let p = boss.pos.clone();
                         self.bullets.push(Bullet(
                             p,
-                            Vec2::new(v * cos(a), v * sin(a)),
+                            Vec2::new(v * f64::cos(a), v * f64::sin(a)),
                             Shooter::Boss,
                         ));
                     }
@@ -598,7 +598,7 @@ impl MyGame {
                 );
             }
 
-            if self.player_1.lives > 0 {
+            if self.player_1.health > 0 {
                 let frame = if self.player_1.moving {
                     (ctx.tick / 4) % 2
                 } else {
@@ -627,7 +627,7 @@ impl MyGame {
                 renderer.draw_sprite(&image, 167, self.player_1.pos.x, self.player_1.pos.y);
             }
 
-            if self.player_2.lives > 0 {
+            if self.player_2.health > 0 {
                 let frame = if self.player_2.moving {
                     (ctx.tick / 4) % 2
                 } else {
@@ -657,7 +657,7 @@ impl MyGame {
             }
 
             for (bi, b) in self.enemies.iter().enumerate() {
-                let dx = cos(b.1);
+                let dx = f64::cos(b.1);
                 let frame = ((ctx.tick as u32 + bi as u32) / 5 % 2) as usize;
 
                 let left = dx < 0.;
@@ -686,7 +686,7 @@ impl MyGame {
                     "red",
                     boss.pos.x - 12.,
                     boss.pos.y + 40.,
-                    (48. * boss.lives as f64) / 80.0,
+                    (48. * boss.health as f64) / 80.0,
                     2.,
                 );
             }
@@ -724,8 +724,6 @@ impl MyGame {
                 renderer.draw_sprite(&image, idx, b.0.x - 8., b.0.y - 8.);
             }
 
-            // self.render_fog_of_war(renderer, ctx);
-
             let numbers = &self.numbers.as_ref().unwrap();
 
             let mut px = 10.0;
@@ -738,10 +736,10 @@ impl MyGame {
             px += 12.0;
             renderer.draw_numbers(&numbers, px, 10., &ammo);
             px += 5.0 * 10.0;
-            renderer.draw_hearts(&numbers, px, 10., self.player_1.lives);
+            renderer.draw_hearts(&numbers, px, 10., self.player_1.health);
 
             let mut px = ctx.window_width - 5.0 * 12.0;
-            renderer.draw_hearts(&numbers, px, 10., self.player_2.lives);
+            renderer.draw_hearts(&numbers, px, 10., self.player_2.health);
 
             let ammo = format!("{}", self.player_2.ammo);
             px -= 5.0 * 10.0;
@@ -753,7 +751,7 @@ impl MyGame {
             px -= 6.0 * 8.0;
             renderer.draw_numbers(&numbers, px, 10., &score);
 
-            if self.player_1.lives < 1 && self.player_2.lives < 1 {
+            if self.player_1.health < 1 && self.player_2.health < 1 {
                 renderer.draw_rect("#0006", 96., 270. - 48., 1920. / 2. - 192., 96.);
                 let text_x = (((1920 / 2) - 13 * 32) / 2) as f64;
                 renderer.draw_big_text(
