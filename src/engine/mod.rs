@@ -23,6 +23,14 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{window, GamepadButton, HtmlImageElement};
 
+// mappings for PS4 Dual Shock in Firefox on Linux
+// need to be changed depending on controller, browser and operating system
+const LEFT_STICK_X_AXIS: u32 = 0;
+const LEFT_STICK_Y_AXIS: u32 = 1;
+const RIGHT_STICK_X_AXIS: u32 = 3;
+const RIGHT_STICK_Y_AXIS: u32 = 4;
+const RIGHT_TRIGGER_0: u32 = 7;
+
 pub struct Engine {
     renderer: Rc<CanvasRenderer>,
     preloader: Preloader,
@@ -66,15 +74,19 @@ impl Engine {
             if let Ok(gamepads) = window.navigator().get_gamepads() {
                 if gamepads.length() > 0 {
                     if let Ok(gamepad) = gamepads.get(0).dyn_into::<web_sys::Gamepad>() {
-                        context.gamepad_1.move_x_axis = gamepad.axes().get(0).as_f64().unwrap();
-                        context.gamepad_1.move_y_axis = gamepad.axes().get(1).as_f64().unwrap();
+                        context.gamepad_1.move_x_axis =
+                            gamepad.axes().get(LEFT_STICK_X_AXIS).as_f64().unwrap();
+                        context.gamepad_1.move_y_axis =
+                            gamepad.axes().get(LEFT_STICK_X_AXIS).as_f64().unwrap();
 
-                        context.gamepad_1.aim_x_axis = gamepad.axes().get(3).as_f64().unwrap();
-                        context.gamepad_1.aim_y_axis = gamepad.axes().get(4).as_f64().unwrap();
+                        context.gamepad_1.aim_x_axis =
+                            gamepad.axes().get(RIGHT_STICK_X_AXIS).as_f64().unwrap();
+                        context.gamepad_1.aim_y_axis =
+                            gamepad.axes().get(RIGHT_STICK_Y_AXIS).as_f64().unwrap();
 
                         context.gamepad_1.shoot = gamepad
                             .buttons()
-                            .get(7)
+                            .get(RIGHT_TRIGGER_0)
                             .dyn_into::<GamepadButton>()
                             .unwrap()
                             .pressed();
@@ -82,15 +94,19 @@ impl Engine {
                 }
                 if gamepads.length() > 1 {
                     if let Ok(gamepad) = gamepads.get(1).dyn_into::<web_sys::Gamepad>() {
-                        context.gamepad_2.move_x_axis = gamepad.axes().get(0).as_f64().unwrap();
-                        context.gamepad_2.move_y_axis = gamepad.axes().get(1).as_f64().unwrap();
+                        context.gamepad_2.move_x_axis =
+                            gamepad.axes().get(LEFT_STICK_X_AXIS).as_f64().unwrap();
+                        context.gamepad_2.move_y_axis =
+                            gamepad.axes().get(LEFT_STICK_Y_AXIS).as_f64().unwrap();
 
-                        context.gamepad_2.aim_x_axis = gamepad.axes().get(3).as_f64().unwrap();
-                        context.gamepad_2.aim_y_axis = gamepad.axes().get(4).as_f64().unwrap();
+                        context.gamepad_2.aim_x_axis =
+                            gamepad.axes().get(RIGHT_STICK_X_AXIS).as_f64().unwrap();
+                        context.gamepad_2.aim_y_axis =
+                            gamepad.axes().get(RIGHT_STICK_Y_AXIS).as_f64().unwrap();
 
                         context.gamepad_2.shoot = gamepad
                             .buttons()
-                            .get(7)
+                            .get(RIGHT_TRIGGER_0)
                             .dyn_into::<GamepadButton>()
                             .unwrap()
                             .pressed();
