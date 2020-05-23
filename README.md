@@ -10,3 +10,5 @@ This is my first non-trivial Rust project.
 npm install
 npm start
 ```
+
+I have written a post on my new homepage about my experience writing this game: [Rust, WebAssembly and web-sys](https://rhmoller.dev/posts/2020/my-experience-with-rust-and-websys/)
