@@ -24,11 +24,11 @@ default = ["wee_alloc"]
 [dependencies]
 # The `wasm-bindgen` crate provides the bare minimum functionality needed
 # to interact with JavaScript.
-wasm-bindgen = { version ="0.2.73", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.73", features = ["serde-serialize"] }
 js-sys = "0.3.50"
 wasm-bindgen-futures = "0.4.23"
-serde = { version = "1.0.106", features = ["derive"] }
-serde_derive = "1.0.106"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_derive = "1.0.125"
 futures = "0.3.14"
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
@@ -39,7 +39,7 @@ wee_alloc = { version = "0.4.5", optional = true }
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
 [dependencies.web-sys]
-version = "0.3.39"
+version = "0.3.50"
 features = [
 "console", "Window", "Document", "Navigator", "Element", "Node", "HtmlCanvasElement", "HtmlImageElement", "CanvasRenderingContext2d",
 "Headers", "Request", "RequestInit", "RequestMode", "Response", "Blob", "Url", "Gamepad", "GamepadButton", "GamepadEvent"
