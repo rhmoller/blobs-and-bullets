@@ -23,12 +23,12 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{window, GamepadButton, HtmlImageElement};
 
-// mappings for PS4 Dual Shock in Firefox on Linux
+// mappings for PS4 Dual Shock in Firefox on Windows
 // need to be changed depending on controller, browser and operating system
 const LEFT_STICK_X_AXIS: u32 = 0;
 const LEFT_STICK_Y_AXIS: u32 = 1;
-const RIGHT_STICK_X_AXIS: u32 = 3;
-const RIGHT_STICK_Y_AXIS: u32 = 4;
+const RIGHT_STICK_X_AXIS: u32 = 2;
+const RIGHT_STICK_Y_AXIS: u32 = 3;
 const RIGHT_TRIGGER_0: u32 = 7;
 
 pub struct Engine {
@@ -77,7 +77,7 @@ impl Engine {
                         context.gamepad_1.move_x_axis =
                             gamepad.axes().get(LEFT_STICK_X_AXIS).as_f64().unwrap();
                         context.gamepad_1.move_y_axis =
-                            gamepad.axes().get(LEFT_STICK_X_AXIS).as_f64().unwrap();
+                            gamepad.axes().get(LEFT_STICK_Y_AXIS).as_f64().unwrap();
 
                         context.gamepad_1.aim_x_axis =
                             gamepad.axes().get(RIGHT_STICK_X_AXIS).as_f64().unwrap();

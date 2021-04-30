@@ -19,6 +19,10 @@ module.exports = {
     host: "0.0.0.0",
     overlay: true
   },
+  experiments: {
+    asyncWebAssembly: true,
+    syncWebAssembly: true
+  },
   plugins: [
     new CopyPlugin([
       path.resolve(__dirname, "static")
