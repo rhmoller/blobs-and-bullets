@@ -164,10 +164,10 @@ impl Player {
 impl MyGame {
     pub fn new() -> Self {
         let spawn_points = vec![
-            (Vec2::new(16. * 30., 16. * 19.), 0, 1),
-            (Vec2::new(16. * 13., 16. * 23.), 1, 0),
-            (Vec2::new(16. * 50., 16. * 24.), 2, 0),
-            (Vec2::new(16. * 18., 16. * 8.), 2, 0),
+            (Vec2::new(16. * 30., 16. * 19.), 0, 5),
+            (Vec2::new(16. * 13., 16. * 23.), 1, 5),
+            (Vec2::new(16. * 50., 16. * 24.), 2, 5),
+            (Vec2::new(16. * 18., 16. * 8.), 2, 5),
         ];
 
         MyGame {
@@ -421,11 +421,11 @@ impl MyGame {
         let active_spawn_point = self.spawn_points.iter().find(|sp| sp.2 > 0);
         if destroyed_spawn_points && active_spawn_point.is_none() {
             self.boss.replace(Boss {
-                pos: Vec2::new(264., -55.),
+                pos: Vec2::new(450., -55.),
                 health: 80,
                 heat: 100.,
                 charging: false,
-                tx: 100. + random() * 300.,
+                tx: 300. + random() * 300.,
             });
         }
 
@@ -532,7 +532,7 @@ impl MyGame {
 
     fn update_boss(&mut self) {
         if let Some(boss) = &mut self.boss {
-            if boss.pos.y < 205.0 {
+            if boss.pos.y < 255.0 {
                 boss.pos.y += 1.;
             } else {
                 boss.heat += 1.;
@@ -547,10 +547,10 @@ impl MyGame {
                     }
                 } else if boss.heat > 25. {
                     boss.tx += 100.0 - 200. * random();
-                    if boss.tx < 50. {
-                        boss.tx += 50.
-                    } else if boss.tx > 7. * 163. {
-                        boss.tx -= 20.
+                    if boss.tx < 300. {
+                        boss.tx = 300.
+                    } else if boss.tx > 7. * 100. {
+                        boss.tx = 700.
                     }
 
                     boss.charging = false;
@@ -699,7 +699,7 @@ impl MyGame {
                         2 => 132,
                         _ => 128,
                     },
-                    Shooter::Boss => 78,
+                    Shooter::Boss => 176,
                 };
                 renderer.draw_sprite(&image, sprite, b.0.x - 8., b.0.y - 8.);
             }
