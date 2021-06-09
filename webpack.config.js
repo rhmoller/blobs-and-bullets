@@ -24,9 +24,11 @@ module.exports = {
     syncWebAssembly: true
   },
   plugins: [
-    new CopyPlugin([
-      path.resolve(__dirname, "static")
-    ]),
+    new CopyPlugin({
+      patterns: [
+          { from: "static" }
+      ]
+    }),
 
     new WasmPackPlugin({
       crateDirectory: __dirname,
