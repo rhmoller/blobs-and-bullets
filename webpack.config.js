@@ -14,10 +14,12 @@ module.exports = {
     filename: "[name].js"
   },
   devServer: {
-    contentBase: dist,
-    disableHostCheck: true,
+    static: dist,
+    allowedHosts: "all",
     host: "0.0.0.0",
-    overlay: true
+    client: {
+      overlay: true
+    }
   },
   experiments: {
     asyncWebAssembly: true,

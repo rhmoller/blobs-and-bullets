@@ -17,10 +17,6 @@ crate-type = ["cdylib"]
 lto = true
 debug = true
 
-[features]
-# If you uncomment this line, it will enable `wee_alloc`:
-default = ["wee_alloc"]
-
 [dependencies]
 # The `wasm-bindgen` crate provides the bare minimum functionality needed
 # to interact with JavaScript.
@@ -30,11 +26,6 @@ wasm-bindgen-futures = "0.4.23"
 serde = { version = "1.0.125", features = ["derive"] }
 serde_derive = "1.0.125"
 futures = "0.3.14"
-
-# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
-# compared to the default allocator's ~10K. However, it is slower than the default
-# allocator, so it's not enabled by default.
-wee_alloc = { version = "0.4.5", optional = true }
 
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
